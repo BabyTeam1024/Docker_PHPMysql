@@ -1,0 +1,9 @@
+version: "2"
+services:
+  php7.0:
+    build:
+      context: .
+      args:
+        phpv: ${php_v}
+        xdebug: ${xdebug}
+    tty: true
