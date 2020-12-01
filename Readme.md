@@ -1,71 +1,122 @@
+# 0x01 搭建PHP环境
+`git clone https://github.com/BabyTeam1024/Docker_PHP.git`
 
-目前支持
+从git下载php自动化搭建脚本编写
 
-- [x] PHP5.6
-- [x] PHP7.0
-- [x] PHP7.1
-- [x] PHP7.2
-- [x] PHP7.3
-- [x] PHP7.4
-- [x] PHP8.0
-
-
-
-# 0x01 设置版本参数
-通过env文件向docker-compose传递环境变量，BuildPHPDocker.sh脚本如下
+# 0x02 编写启动脚本
+主要负责生成指定版本的php、mysql环境
 
 ``` bash
 #!/bin/bash
 
 cp .docker-compose.yml.bak docker-compose.yml
 
-read -p "Input PHP Version (default n):" phpv
+read -p "Input PHP Version (default php7.0):" phpv
 read -p "Open xdebug (default yes):" xdebug
-if [ "" = "$docker" ]; then
-	xdebug="yes"
+read -p "Input Mysql Version (default 5.6):" mysqlv
+read -p "Input Mysql User (default root):" mysqluser
+read -p "Input Mysql Pass (default root):" mysqlpass
+
+
+if [ "" = "$phpv" ]; then
+  phpv="php7.0"
 fi
-sed -i "s/dockername/$phpv/g" docker-compose.yml
+if [ "" = "$xdebug" ]; then
+  xdebug="yes"
+fi
+if [ "" = "$mysqlv" ]; then
+  mysqlv="5.6"
+fi
+if [ "" = "$mysqluser" ]; then
+  mysqluser="root"
+fi
+if [ "" = "$mysqlpass" ]; then
+  mysqlpass="root"
+fi
+
+sed -i "s/phpdockername/$phpv/g" docker-compose.yml
+
 echo "php_v=$phpv" > .env
 echo "xdebug=$xdebug" >> .env
+echo "mysql_v=$mysqlv" >> .env
+echo "mysql_user=$mysqluser" >> .env
+echo "mysql_pass=$mysqlpass" >> .env
 docker-compose build
 ```
 
-主要包含两个参数
-1. php版本
-2. 是否开启xdebug 
+# 0x03 编写DockerCompose
+利用networks配置局域网络将两台主机联通
 
-# 0x02 DockerCompose
-
-``` docker
-version: "3"
+``` yml
+version: "2"
 services:
-  dockername:
-    build:
-      context: .
-      args:
-        phpv: ${php_v}
-        xdebug: ${xdebug}
+  mysql:
+    image: mysql:$mysql_v
+    container_name: mysql$mysql_v
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "root"
+      MYSQL_ROOT_PASSWORD: "root"
+    networks:
+      - net-mysql
+
+  phpdockername:
+    build: .
+    container_name: phpdockername
+    ports:
+      - "8080:80"
+    environment:
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "root"
+      MYSQL_ROOT_PASSWORD: "root"
+      PMA_HOST: mysql$mysql_v
+    networks:
+      - net-mysql
+
+networks:
+  net-mysql:
+```
+
+或者利用links 将mysql添加成php的依赖容器通过
+
+``` yml
+version: "2"
+services:
+  mysql:
+    image: mysql:$mysql_v
+    container_name: mysql$mysql_v
+    hostname: mysql$mysql_v
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "root"
+      MYSQL_ROOT_PASSWORD: "root"
+
+  phpdockername:
+    build: .
+    container_name: phpdockername
+    ports:
+      - "8080:80"
+    environment:
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "root"
+      MYSQL_ROOT_PASSWORD: "root"
+      PMA_HOST: mysql$mysql_v
     tty: true
-```
-
-在dockerfile中cmd为`/bin/bash`时需要在dockercompose中选择tty参数以便在启动后能够一直保持交互；利用args传递参数
-# 0x03 Dockerfile
-
-``` dockerfile
-FROM ubuntu:18.04
-RUN apt update && apt install software-properties-common -y && add-apt-repository ppa:ondrej/php -y && apt update
-ARG phpv
-ARG xdebug
-ENV DEBIAN_FRONTEND noninteractive
-RUN apt install $phpv -y --force-yes
-RUN if [ "$xdebug" = "yes" ] ; then apt install ${phpv}-xdebug ;fi
-CMD ["/bin/bash"]
+    links:
+    - mysql
 
 ```
 
-# 0x04 使用
+# 0x04 使用步骤
 
-![](https://codimd.s3.shivering-isles.com/demo/uploads/upload_030dbca2861d1c945cd1298c605feaab.png)
+`git clone https://github.com/BabyTeam1024/Docker_PHPMysql.git`
 
+![](https://codimd.s3.shivering-isles.com/demo/uploads/upload_54b18f9b29901918208e2a259f38b495.png)
 
 

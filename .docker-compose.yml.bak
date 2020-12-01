@@ -1,9 +1,28 @@
 version: "2"
 services:
-  dockername:
-    build:
-      context: .
-      args:
-        phpv: ${php_v}
-        xdebug: ${xdebug}
+  mysql:
+    image: mysql:$mysql_v
+    container_name: mysql$mysql_v
+    hostname: mysql$mysql_v
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "root"
+      MYSQL_ROOT_PASSWORD: "root"
+
+  phpdockername:
+    build: .
+    container_name: phpdockername
+    ports:
+      - "8080:80"
+    environment:
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "root"
+      MYSQL_ROOT_PASSWORD: "root"
+      PMA_HOST: mysql$mysql_v
     tty: true
+    links:
+    - mysql
+
