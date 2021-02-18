@@ -17,6 +17,9 @@ services:
     container_name: php7.0
     ports:
       - "8080:80"
+    args:
+      phpv: ${php_v}
+      xdebug: ${xdebug}
     environment:
       MYSQL_USER: "root"
       MYSQL_PASSWORD: "root"
