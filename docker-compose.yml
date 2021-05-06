@@ -1,4 +1,4 @@
-version: "2"
+version: "3.3"
 services:
   mysql:
     image: mysql:$mysql_v
@@ -13,13 +13,17 @@ services:
       MYSQL_ROOT_PASSWORD: "root"
 
   php7.0:
-    build: .
-    container_name: php7.0
+    build:
+      context: .
+      args:
+        phpv: ${php_v}
+        xdebug: ${xdebug}
     ports:
       - "8080:80"
-    args:
-      phpv: ${php_v}
-      xdebug: ${xdebug}
+      - "7443:443"
+      - "9001:9001"
+      - "7722:22"
+    container_name: php7.0
     environment:
       MYSQL_USER: "root"
       MYSQL_PASSWORD: "root"
@@ -27,5 +31,4 @@ services:
       PMA_HOST: mysql$mysql_v
     tty: true
     links:
-    - mysql
-
+     - mysql
