@@ -12,9 +12,9 @@ services:
       MYSQL_PASSWORD: "root"
       MYSQL_ROOT_PASSWORD: "root"
 
-  php7.0:
+  phpdockername:
     build: .
-    container_name: php7.0
+    container_name: phpdockername
     ports:
       - "8080:80"
     args:
